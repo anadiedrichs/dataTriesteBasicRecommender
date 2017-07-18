@@ -40,12 +40,10 @@ ggplot(dataset, aes(rating)) + geom_histogram()
 
 #' install data.table
 #' 
-install.packages("data.table")
+# install.packages("data.table")
 library(data.table)
 
 #getting all the genres of the movies
-library(data.table)
-
 movgen <- as.data.frame(movies$genres,stringsAsFactors = FALSE)
 unlist(strsplit(movgen$`movies$genres`, "[|]"))
 movgen_list <- unique(unlist(strsplit(movgen$`movies$genres`, "[|]")))
@@ -67,11 +65,13 @@ for(i in 1:nrow(mm))
 movgen_matrix2 <- mm
 
 #' convert to int, checking if that works
-movgen_matrix2 <- as.data.frame(movgen_matrix2[-1,], stringsAsFactors=FALSE) #remove first row, which was the genre list
+movgen_matrix2 <- as.data.frame(movgen_matrix2, stringsAsFactors=FALSE)
 for (c in 1:ncol(movgen_matrix2)) {
   movgen_matrix2[,c] <- as.integer(movgen_matrix2[,c])
 } #convert from characters to integers
-
+#' other way to do it is:
+#' 
+sapply(movgen_matrix2,as.integer)
 
 #' matrix of rating users
 #' 0 para null values, 1 for ratings over 3, -1 for ratings less or equal than 3
@@ -113,7 +113,23 @@ rownames(movgen_matrix3) <- NULL
 #' checking dimensions
 dim(movgen_matrix3)
 dim(binary_ratings2)
-# Now we can calculate the dot product of the genre matrix (movgen_matrix3) and the ratings
-# matrix (binary_ratings2) and obtain the user profiles. Ensure you convert to binary scale
 
-user_profile <- t(movgen_matrix3)*binary_ratings2
+#' Now we can calculate the dot product of the genre matrix (movgen_matrix3) and the ratings
+#' matrix (binary_ratings2) and obtain the user profiles. Ensure you convert to binary scale
+
+user_profile <- matrix(0,nrow = ncol(movgen_matrix3), ncol=ncol(binary_ratings2))
+
+for(c in 1:ncol(binary_ratings2))
+{
+  for(i in 1:ncol(movgen_matrix3))
+  {
+    user_profile[i,c]<- sum(movgen_matrix3[,i]*binary_ratings2[,c])   
+  }
+}
+
+# turn user profile matrix in binary values
+user_profile[which(user_profile<=0),] <- 0
+user_profile[which(user_profile>0),] <- 1
+
+#' Trying metrics
+
